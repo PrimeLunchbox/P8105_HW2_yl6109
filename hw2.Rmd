@@ -100,23 +100,20 @@ fianl_df = month2_pols %>%
 ```{r}
 library(readxl)
 
-mr_tw_df = read_excel("./data/wheel.xlsx", 
-                       sheet = "Mr. Trash Wheel") %>% 
+mr_tw_df = read_excel("./data/wheel.xlsx", sheet = "Mr. Trash Wheel") %>% 
   janitor::clean_names() %>% 
   select(-x15, -x16) %>%
   filter(row_number() != 708) %>% 
   mutate(trash_wheel_type = "Mr")
 
 
-prof_tw_df = read_excel("./data/wheel.xlsx", 
-                       sheet = "Professor Trash Wheel") %>% 
+prof_tw_df = read_excel("./data/wheel.xlsx", sheet = "Professor Trash Wheel") %>% 
   janitor::clean_names() %>% 
   filter(row_number() != 133) %>% 
   mutate(trash_wheel_type = "Professor")
 
 
-gf_tw_df = read_excel("./data/wheel.xlsx", 
-                       sheet = "Gwynns Falls Trash Wheel") %>% 
+gf_tw_df = read_excel("./data/wheel.xlsx", sheet = "Gwynns Falls Trash Wheel") %>% 
   janitor::clean_names() %>% 
   filter(row_number() != 350) %>% 
   mutate(trash_wheel_type = "Gwynns_Falls")
@@ -126,4 +123,100 @@ mr_tw_df$year = as.numeric(mr_tw_df$year)
 final_df = bind_rows(mr_tw_df, prof_tw_df, gf_tw_df) %>% 
   select(year, month, date, trash_wheel_type, dumpster, everything()) %>%
   arrange(year, month, date)
+```
+
+### Description
+
+## Problem 3
+
+construct the merged dataframe.
+
+```{r}
+zc_df = read_csv("./data/Zip Codes.csv") %>% 
+  janitor::clean_names() %>% 
+  select(-file_date, -county_code, -state_fips)
+  
+
+znyc_df = read_csv("./data/Zip_NYC.csv") %>%
+  janitor::clean_names() %>% 
+  pivot_longer(
+    x2015_01_31:x2024_08_31,
+    names_to = "date",
+    names_prefix = "x",
+    values_to = "price") %>% 
+  separate(date, into = c("year", "month", "day")) %>% 
+  mutate(county_name = recode(county_name, "Bronx County" = "Bronx", "Kings County" = "Kings", "New York County" = "New York", "Queens County" = "Queens", "Richmond County" = "Richmond")) %>%
+  mutate(county = county_name, zip_code = region_name) %>% 
+  select(-county_name, -region_name, -state_name) 
+
+
+merged_df = zc_df %>%
+  left_join(znyc_df, by = "zip_code", "county") %>% 
+  mutate(county = county.x) %>%
+  select(-county.x, -county.y, -region_type) %>% 
+  arrange(year, month, day) %>% 
+  mutate(month = recode(month, `01` = "January", `02` = "February", `03` = "March", `04` = "April", `05` = "May", `06` = "June", `07` = "July", `08` = "August", `09` = "September", `10` = "October", `11` = "November", `12` = "December")) %>% select(year, month, day, state, city, county, county_fips, neighborhood, region_id, zip_code, size_rank, price, everything()) 
+
+final_merged_df = merged_df %>% 
+  filter(row_number() < 17517)
+```
+
+
+count number of unique observations
+
+```{r}
+library(dplyr)
+
+# for different zip codes observed,
+unique_zc_count = 
+  final_merged_df %>% 
+  summarize(n_distinct(zip_code))
+
+# for different neighborhoods observed,
+unique_nbhd_count = 
+  final_merged_df %>% 
+  summarize(n_distinct(neighborhood))
+
+# for different exact zip codes that are not included in zillow datasets,
+zc_not_included = merged_df %>% 
+  filter(row_number() >= 17517 & row_number() <= 17687) %>% 
+  distinct(zip_code) %>%
+  arrange(zip_code)
+
+unique_zc_count %>% print()
+unique_nbhd_count %>% print()
+zc_not_included %>% print()
+```
+in total, 17516 observations exists. 149 unique zip codes are included. 43 unique neighborhoods are included.
+
+according to merged_df with na year, zip codes that are not in the Zillow dataset can be found using the r code above.
+
+For price difference between Jan 2020 and Jan 2021,
+```{r}
+library(tidyr)
+
+y20_data = final_merged_df %>% 
+  filter(month == "January" & year == "2020") %>% 
+  select(zip_code, price, neighborhood) %>% 
+  rename(y20_price = price)
+
+y21_data = final_merged_df %>% 
+  filter(month == "January" & year == "2021") %>% 
+  select(zip_code, price, neighborhood) %>%
+  rename(y21_price = price)
+
+comparison = y20_data %>% 
+  inner_join(y21_data, by = "zip_code") %>% 
+  filter(!is.na(y20_price) & !is.na(y21_price)) %>% 
+  mutate(price_dif = y20_price - y21_price) %>% 
+  mutate(neighborhood = neighborhood.x) %>% 
+  select(-neighborhood.x, -neighborhood.y)
+
+largest_drop = comparison %>% 
+  arrange(price_dif) %>% 
+  head(10) %>% 
+  select(zip_code, neighborhood, y20_price, y21_price, price_dif)
+
+# the zip codes and corresponding neighborhoods of top 10 largest drops in rent price from 2020 to 2021 is shown below.
+largest_drop %>% print()
 ```
