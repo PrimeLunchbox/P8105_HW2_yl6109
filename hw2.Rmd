@@ -93,3 +93,37 @@ fianl_df = month2_pols %>%
 ```
 
 ### description
+
+
+## Problem 2
+
+```{r}
+library(readxl)
+
+mr_tw_df = read_excel("./data/wheel.xlsx", 
+                       sheet = "Mr. Trash Wheel") %>% 
+  janitor::clean_names() %>% 
+  select(-x15, -x16) %>%
+  filter(row_number() != 708) %>% 
+  mutate(trash_wheel_type = "Mr")
+
+
+prof_tw_df = read_excel("./data/wheel.xlsx", 
+                       sheet = "Professor Trash Wheel") %>% 
+  janitor::clean_names() %>% 
+  filter(row_number() != 133) %>% 
+  mutate(trash_wheel_type = "Professor")
+
+
+gf_tw_df = read_excel("./data/wheel.xlsx", 
+                       sheet = "Gwynns Falls Trash Wheel") %>% 
+  janitor::clean_names() %>% 
+  filter(row_number() != 350) %>% 
+  mutate(trash_wheel_type = "Gwynns_Falls")
+
+
+mr_tw_df$year = as.numeric(mr_tw_df$year)
+final_df = bind_rows(mr_tw_df, prof_tw_df, gf_tw_df) %>% 
+  select(year, month, date, trash_wheel_type, dumpster, everything()) %>%
+  arrange(year, month, date)
+```
