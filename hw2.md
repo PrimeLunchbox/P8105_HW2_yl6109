@@ -53,7 +53,28 @@ month_pols = pos_df_month %>%
 
 
 month2_pols = select(month_pols, -prez_dem, -prez_gop, -day)
+
+month2_pols %>% print()
 ```
+
+    ## # A tibble: 822 × 9
+    ##    year  month     gov_gop sen_gop rep_gop gov_dem sen_dem rep_dem president
+    ##    <chr> <chr>       <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl> <chr>    
+    ##  1 1947  January        23      51     253      23      45     198 dem      
+    ##  2 1947  February       23      51     253      23      45     198 dem      
+    ##  3 1947  March          23      51     253      23      45     198 dem      
+    ##  4 1947  April          23      51     253      23      45     198 dem      
+    ##  5 1947  May            23      51     253      23      45     198 dem      
+    ##  6 1947  June           23      51     253      23      45     198 dem      
+    ##  7 1947  July           23      51     253      23      45     198 dem      
+    ##  8 1947  August         23      51     253      23      45     198 dem      
+    ##  9 1947  September      23      51     253      23      45     198 dem      
+    ## 10 1947  October        23      51     253      23      45     198 dem      
+    ## # ℹ 812 more rows
+
+The final df for pols-month.csv contains 822 rows and 9 columns. year
+range: 1947 to 2015. Key variables: year, month, gov_gop, sen_gop,
+rep_gop, gov_dem, sen_dem, rep_dem, president.
 
 ### snp
 
@@ -92,7 +113,27 @@ month2_snp = month_snp %>%
   arrange(year) %>% 
   select(year, month, everything()) %>% 
   select(-date)
+
+month2_snp %>% print()
 ```
+
+    ## # A tibble: 787 × 3
+    ##     year month close
+    ##    <dbl> <chr> <dbl>
+    ##  1  1950 April 166. 
+    ##  2  1950 April 164. 
+    ##  3  1950 April 120. 
+    ##  4  1950 April 109. 
+    ##  5  1950 April 108. 
+    ##  6  1950 April  95.9
+    ##  7  1950 April  87.6
+    ##  8  1950 April  56.3
+    ##  9  1950 April  55.6
+    ## 10  1950 April  45.3
+    ## # ℹ 777 more rows
+
+The final df for snp.csv contains 787 rows and 3 columns. year range:
+1950 to 2015. Key variables: year, month, close.
 
 ### unemployment
 
@@ -117,19 +158,60 @@ unemployment_df = read_csv("./data/unemployment.csv") %>%
 ``` r
 month_un = unemployment_df %>% 
   mutate(month = recode(month, "jan" = "January", "feb" = "February", "mar" = "March", "apr" = "April", "may" = "May", "jun" = "June", "jul" = "July", "aug" = "August", "sep" = "September", "oct" = "October", "nov" = "November", "dec" = "December"))
+
+month_un %>% print()
 ```
+
+    ## # A tibble: 816 × 3
+    ##     year month     `unemployment_rate(%)`
+    ##    <dbl> <chr>                      <dbl>
+    ##  1  1948 January                      3.4
+    ##  2  1948 February                     3.8
+    ##  3  1948 March                        4  
+    ##  4  1948 April                        3.9
+    ##  5  1948 May                          3.5
+    ##  6  1948 June                         3.6
+    ##  7  1948 July                         3.6
+    ##  8  1948 August                       3.9
+    ##  9  1948 September                    3.8
+    ## 10  1948 October                      3.7
+    ## # ℹ 806 more rows
+
+The final df for unemployment.csvcontains 816 rows and 3 columns. year
+range: 1948 to 2015. Key variables: year, month, unemployment rate.
 
 ### merging the three datasets
 
 ``` r
 month2_pols$year = as.numeric(month2_pols$year)
 
-fianl_df = month2_pols %>% 
+final_df1 = month2_pols %>% 
   left_join(month2_snp, by = c("year", "month")) %>% 
   left_join(month_un, by = c("year", "month"))
+
+final_df1 %>% print()
 ```
 
-### description
+    ## # A tibble: 1,541 × 11
+    ##     year month   gov_gop sen_gop rep_gop gov_dem sen_dem rep_dem president close
+    ##    <dbl> <chr>     <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl> <chr>     <dbl>
+    ##  1  1947 January      23      51     253      23      45     198 dem          NA
+    ##  2  1947 Februa…      23      51     253      23      45     198 dem          NA
+    ##  3  1947 March        23      51     253      23      45     198 dem          NA
+    ##  4  1947 April        23      51     253      23      45     198 dem          NA
+    ##  5  1947 May          23      51     253      23      45     198 dem          NA
+    ##  6  1947 June         23      51     253      23      45     198 dem          NA
+    ##  7  1947 July         23      51     253      23      45     198 dem          NA
+    ##  8  1947 August       23      51     253      23      45     198 dem          NA
+    ##  9  1947 Septem…      23      51     253      23      45     198 dem          NA
+    ## 10  1947 October      23      51     253      23      45     198 dem          NA
+    ## # ℹ 1,531 more rows
+    ## # ℹ 1 more variable: `unemployment_rate(%)` <dbl>
+
+The final df for pols-month.csv contains 1541 rows and 11 columns. year
+range: 1947 to 2015. Key variables: year, month, gov_gop, sen_gop,
+rep_gop, gov_dem, sen_dem, rep_dem, president, close and unemployment
+rate.
 
 ## Problem 2
 
@@ -161,12 +243,16 @@ gf_tw_df = read_excel("./data/wheel.xlsx", sheet = "Gwynns Falls Trash Wheel") %
 
 
 mr_tw_df$year = as.numeric(mr_tw_df$year)
-final_df = bind_rows(mr_tw_df, prof_tw_df, gf_tw_df) %>% 
+final_df2 = bind_rows(mr_tw_df, prof_tw_df, gf_tw_df) %>% 
   select(year, month, date, trash_wheel_type, dumpster, everything()) %>%
   arrange(year, month, date)
 ```
 
 ### Description
+
+The total weight of trash collected by prof. trash wheel was 282.26
+tons. The total number of cigarette butts collected by Gwynns in June
+2022 is 1.812^{4}.
 
 ## Problem 3
 
@@ -328,7 +414,7 @@ largest_drop = comparison %>%
   head(10) %>% 
   select(zip_code, neighborhood, y20_price, y21_price, price_dif)
 
-# the zip codes and corresponding neighborhoods of top 10 largest drops in rent price from 2020 to 2021 is shown below.
+# the zip codes and corresponding neighborhoods of top 10 largest drops in rental price from 2020 to 2021 is shown below.
 largest_drop %>% print()
 ```
 

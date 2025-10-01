@@ -33,8 +33,12 @@ month_pols = pos_df_month %>%
 
 
 month2_pols = select(month_pols, -prez_dem, -prez_gop, -day)
+
+month2_pols %>% print()
 ```
 
+The final df for pols-month.csv contains 822 rows and 9 columns. year range: 1947 to 2015. 
+Key variables: year, month, gov_gop, sen_gop, rep_gop, gov_dem, sen_dem, rep_dem, president.
 
 ### snp
 
@@ -63,7 +67,11 @@ month2_snp = month_snp %>%
   arrange(year) %>% 
   select(year, month, everything()) %>% 
   select(-date)
+
+month2_snp %>% print()
 ```
+
+The final df for snp.csv contains 787 rows and 3 columns. year range: 1950 to 2015. Key variables: year, month, close.
 
 ### unemployment
 
@@ -79,7 +87,12 @@ unemployment_df = read_csv("./data/unemployment.csv") %>%
 
 month_un = unemployment_df %>% 
   mutate(month = recode(month, "jan" = "January", "feb" = "February", "mar" = "March", "apr" = "April", "may" = "May", "jun" = "June", "jul" = "July", "aug" = "August", "sep" = "September", "oct" = "October", "nov" = "November", "dec" = "December"))
+
+month_un %>% print()
 ```
+
+The final df for unemployment.csvcontains 816 rows and 3 columns. year range: 1948 to 2015. 
+Key variables: year, month, unemployment rate.
 
 
 ### merging the three datasets
@@ -87,12 +100,15 @@ month_un = unemployment_df %>%
 ```{r}
 month2_pols$year = as.numeric(month2_pols$year)
 
-fianl_df = month2_pols %>% 
+final_df1 = month2_pols %>% 
   left_join(month2_snp, by = c("year", "month")) %>% 
   left_join(month_un, by = c("year", "month"))
+
+final_df1 %>% print()
 ```
 
-### description
+The final df for pols-month.csv contains 1541 rows and 11 columns. year range: 1947 to 2015. 
+Key variables: year, month, gov_gop, sen_gop, rep_gop, gov_dem, sen_dem, rep_dem, president, close and unemployment rate.
 
 
 ## Problem 2
@@ -120,12 +136,14 @@ gf_tw_df = read_excel("./data/wheel.xlsx", sheet = "Gwynns Falls Trash Wheel") %
 
 
 mr_tw_df$year = as.numeric(mr_tw_df$year)
-final_df = bind_rows(mr_tw_df, prof_tw_df, gf_tw_df) %>% 
+final_df2 = bind_rows(mr_tw_df, prof_tw_df, gf_tw_df) %>% 
   select(year, month, date, trash_wheel_type, dumpster, everything()) %>%
   arrange(year, month, date)
 ```
 
 ### Description
+
+The total weight of trash collected by prof. trash wheel was 282.26 tons. The total number of cigarette butts collected by Gwynns in June 2022 is `r sum(gf_tw_df$cigarette_butts[75:87])`.
 
 ## Problem 3
 
@@ -217,6 +235,6 @@ largest_drop = comparison %>%
   head(10) %>% 
   select(zip_code, neighborhood, y20_price, y21_price, price_dif)
 
-# the zip codes and corresponding neighborhoods of top 10 largest drops in rent price from 2020 to 2021 is shown below.
+# the zip codes and corresponding neighborhoods of top 10 largest drops in rental price from 2020 to 2021 is shown below.
 largest_drop %>% print()
 ```
